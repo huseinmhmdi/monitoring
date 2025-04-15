@@ -1,0 +1,12 @@
+tortoise-orm==0.21.5
+aerich==0.7.2
+aiomysql==0.2.0
+SQLAlchemy==2.0.32
+PyMySQL==1.1.1
+Jinja2==3.1.4
+cryptography~=43.0.0
+fastapi==0.112.0
+uvicorn==0.30.5
+mysqlclient==2.2.4
+python-dotenv==1.0.1
+aiohttp==3.10.5

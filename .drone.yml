@@ -1,0 +1,39 @@
+kind: pipeline
+type: docker
+name: CI
+
+trigger:
+  branch:
+    - main
+
+steps:
+  - name: docker
+    image: docker.iranrepo.ir/plugins/docker:20.14.4
+    pull: if-not-exists
+    privileged: true
+    settings:
+      repo: git.d.aiengines.ir/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}
+      cache_from: git.d.aiengines.ir/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}:latest
+      tags:
+        - v${DRONE_BUILD_NUMBER}
+        - latest
+      purge: false
+      registry: https://git.d.aiengines.ir
+      username:
+        from_secret: registry-user
+      password:
+        from_secret: registry-token
+
+  - name: deploy
+    image: docker.iranrepo.ir/appleboy/drone-ssh
+    pull: if-not-exists
+    settings:
+      host: 192.168.130.25
+      username: bagher
+      timeout: 1m
+      command_timeout: 2m
+      key:
+        from_secret: ssh-key
+      script:
+        - docker service update -d --image git.d.aiengines.ir/${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}:v${DRONE_BUILD_NUMBER} --with-registry-auth ${DRONE_REPO_NAME}
+

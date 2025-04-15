@@ -1,0 +1,105 @@
+from tortoise import BaseDBAsyncClient
+
+
+async def upgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        CREATE TABLE IF NOT EXISTS `datasource` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `type` VARCHAR(13) NOT NULL  COMMENT 'MYSQL: mysql\nREST: rest\nELASTICSEARCH: elasticsearch',
+    `args` JSON NOT NULL
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `operator` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `type` VARCHAR(5) NOT NULL  COMMENT 'SMS: sms\nEMAIL: email\nCALL: call\nREST: rest',
+    `args` JSON NOT NULL
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `project` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL UNIQUE,
+    `level_count` INT NOT NULL  DEFAULT 0
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `monitor` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `query` VARCHAR(1000) NOT NULL,
+    `interval` INT NOT NULL  DEFAULT 0,
+    `is_active` BOOL NOT NULL  DEFAULT 1,
+    `project_id` INT NOT NULL,
+    `source_id` INT NOT NULL,
+    CONSTRAINT `fk_monitor_project_f9062bc5` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_monitor_datasour_d8898204` FOREIGN KEY (`source_id`) REFERENCES `datasource` (`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `alert` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `condition` VARCHAR(255) NOT NULL,
+    `duration` INT NOT NULL  DEFAULT 0,
+    `tolerance` INT NOT NULL  DEFAULT 0,
+    `status` VARCHAR(8) NOT NULL  COMMENT 'RESULVED: resulved\nFIRING: firing\nWARNING: warning',
+    `level` INT NOT NULL  DEFAULT 0,
+    `monitor_id` INT NOT NULL,
+    `operator_id` INT NOT NULL,
+    CONSTRAINT `fk_alert_monitor_be171010` FOREIGN KEY (`monitor_id`) REFERENCES `monitor` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_alert_operator_47dc01d2` FOREIGN KEY (`operator_id`) REFERENCES `operator` (`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `alertoperatorresult` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `status` BOOL NOT NULL,
+    `description` LONGTEXT,
+    `alert_id` INT NOT NULL,
+    CONSTRAINT `fk_alertope_alert_c77cc1c8` FOREIGN KEY (`alert_id`) REFERENCES `alert` (`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `alertresult` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `is_passed` BOOL NOT NULL  DEFAULT 0,
+    `alert_id` INT NOT NULL,
+    CONSTRAINT `fk_alertres_alert_e78be601` FOREIGN KEY (`alert_id`) REFERENCES `alert` (`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `montitorresult` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `data` JSON NOT NULL,
+    `monitor_id` INT NOT NULL,
+    CONSTRAINT `fk_montitor_monitor_fb3ca779` FOREIGN KEY (`monitor_id`) REFERENCES `monitor` (`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `user` (
+    `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `phone_number` VARCHAR(255) NOT NULL UNIQUE,
+    `username` VARCHAR(255)  UNIQUE,
+    `email` VARCHAR(255)  UNIQUE,
+    `password` VARCHAR(255),
+    `first_name` VARCHAR(255),
+    `last_name` VARCHAR(255),
+    `father_name` VARCHAR(255),
+    `birth_daye` DATETIME(6)
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS `aerich` (
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `version` VARCHAR(255) NOT NULL,
+    `app` VARCHAR(100) NOT NULL,
+    `content` JSON NOT NULL
+) CHARACTER SET utf8mb4;"""
+
+
+async def downgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        """
