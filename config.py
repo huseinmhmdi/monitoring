@@ -9,7 +9,7 @@ load_dotenv()
 
 TORTOISE_ORM = {
     "connections": {
-         "default": "mysql://monitoring:SI17j7MfziA9YHh@192.168.130.29:3306/monitoring"
+         "default": os.getenv("DB_URL")
     },
     "apps": {
         "models": {
